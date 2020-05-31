@@ -1,7 +1,7 @@
 #include<stdio.h>
 #include<stdlib.h>
 #include<string.h>
-/*These headeer files are used to invoke socket API(s)*/
+/*These header files are used to invoke socket API(s)*/
 #include<sys/types.h>
 #include<sys/socket.h>
 #define MAX_STRING_LIMIT 1024
@@ -15,7 +15,7 @@ int main()
     char data[1024];
 
     /*creating a socket*/
-    network_socket = socket(AF_INET, SOCK_STREAM, 0); //tcp protocol socket
+    network_socket = socket(AF_INET, SOCK_DGRAM, 0); //udp protocol socket
     fprintf(stdout,"create :\n");
     
     /*specify an address for the socket*/
@@ -25,17 +25,7 @@ int main()
     server_address.sin_addr.s_addr = INADDR_ANY;
     fprintf(stdout,"specify add :\n");
 
-    /*connect*/
-    connect_status = connect(network_socket, 
-                             (struct sockaddr *)&server_address,
-                             sizeof(server_address));
-    if (connect_status == -1)
-    {
-        fprintf(stderr,"ERROR IN CONNECT:\n");
-    }
-    fprintf(stdout,"connect:\n");
     /*Receive*/
-    
     fprintf(stdout,"Receive:\n");
     do
     {

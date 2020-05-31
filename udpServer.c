@@ -72,7 +72,7 @@ int main()
 
 
     /*creating a socket*/
-    network_socket = socket(AF_INET, SOCK_STREAM, 0); //tcp protocol socket
+    network_socket = socket(AF_INET, SOCK_DGRAM, 0); //udp protocol socket
     fprintf(stdout,"create socket:\n");
 
     /*specify an address for the socket*/
@@ -86,15 +86,7 @@ int main()
             (struct sockaddr *)&server_address,
             sizeof(server_address));
     fprintf(stdout,"binding:\n");
-    /*Listen*/
-    listen(network_socket,3);
-    fprintf(stdout,"Listen:\n");
 
-    /*Accept*/
-    client_socket = accept(network_socket, 
-            NULL,
-            NULL);
-    fprintf(stdout,"Accept:\n");
     do
     {
         memset(string,0,sizeof(String));
