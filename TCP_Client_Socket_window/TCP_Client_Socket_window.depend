@@ -1,0 +1,7 @@
+# depslib dependency file v1.0
+1599890393 source:d:\satvik\git_repo\socketprogramming\tcp_client_socket_window\main.c
+	<stdio.h>
+	<stdlib.h>
+	<string.h>
+	<winsock2.h>
+
