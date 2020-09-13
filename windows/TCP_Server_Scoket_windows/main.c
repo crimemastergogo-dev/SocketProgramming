@@ -6,8 +6,8 @@
 int main()
 {
     WSADATA     WSAData;
-    SOCKET      S_socket; /*Used to create server*/
-    SOCKET      C_socket; /*Used in accept  from client*/
+    SOCKET      S_socket;  /*Used to create server*/
+    SOCKET      C_socket;  /*Used in accept  from client*/
     struct sockaddr_in S_add;
     struct sockaddr_in C_add; /*Used in accept */
     char        buffer[20];
