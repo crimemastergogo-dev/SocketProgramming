@@ -7,9 +7,9 @@
 #include <arpa/inet.h>          
 #include <unistd.h>           
 #include <errno.h>             
-#include <if_ether.h>             
-#include <ip.h>             
-#include <tcp.h>             
+#include <netinet/if_ether.h>             
+#include <netinet/ip.h>             
+#include <netinet/tcp.h>             
 
 
 typedef struct
@@ -18,7 +18,7 @@ typedef struct
     char name[20];
 }student;
 
-student *Unpack(char buffer[sizeof(student)])
+student *Unpack(unsigned char *buffer)
 {
     student *std   = NULL;
     int idx = 0;
@@ -48,16 +48,19 @@ student *Unpack(char buffer[sizeof(student)])
 int main()
 {
     struct sockaddr raw_Addr;
-    struct sockaddr source;
-    struct sockaddr dest;
+    struct sockaddr_in source;
+    struct sockaddr_in dest;
     struct ethhdr   *eth         = NULL;
     struct iphdr    *ip          = NULL;
+    struct tcphdr   *tcp         = NULL;
     student         *std         = NULL;
     unsigned  char  *buffer      = NULL;
+    unsigned  char  *DATA        = NULL;
     int             raw_server   = 0;
     int             raw_Addr_len = 0;
     int             buffer_len   = 0;
-    int             client       = 0;
+    int             ip_hdr_len   = 0;
+    int             FData_len    = 0;
     int             idx          = 0;
 
 
@@ -82,7 +85,7 @@ int main()
     }
 
     memset(&raw_Addr_len,0,sizeof(struct sockaddr));
-    buffer_len = recv(client,buffer,65536,0,&raw_Addr,(socklen_t *)&raw_Addr_len);
+    buffer_len = recvfrom(raw_server,buffer,65536,0,&raw_Addr,(socklen_t *)&raw_Addr_len);
     if (0 > buffer_len)
     {
         perror("Failed to Recv \n");
@@ -105,7 +108,7 @@ int main()
     printf("\nEthernet Header\n");
     printf("\t|-Source Address : %.2X-%.2X-%.2X-%.2X-%.2X-%.2X\n",eth->h_source[0],eth->h_source[1],eth->h_source[2],eth->h_source[3],eth->h_source[4],eth->h_source[5]);
     printf("\t|-Destination Address : %.2X-%.2X-%.2X-%.2X-%.2X-%.2X\n",eth->h_dest[0],eth->h_dest[1],eth->h_dest[2],eth->h_dest[3],eth->h_dest[4],eth->h_dest[5]);
-    printf("\t|-Protocol : %d\n,"eth->h_proto);
+    printf("\t|-Protocol : %d\n",eth->h_proto);
 
     ip  = (struct iphdr*)(buffer + sizeof(struct ethhdr));
     memset(&source,0,sizeof(struct sockaddr));
@@ -114,6 +117,7 @@ int main()
     source.sin_addr.s_addr = ip->saddr;
     dest.sin_addr.s_addr   = ip->daddr;
 
+    printf("\nIP Header\n");
     printf("\t|-Version : %d\n",(unsigned int)ip->version);
     printf("\t|-Internet Header Length : %d DWORDS or %d Bytes\n",(unsigned int)ip->ihl,((unsigned int)(ip->ihl))*4);
     printf("\t|-Type Of Service : %d\n",(unsigned int)ip->tos);
@@ -125,13 +129,45 @@ int main()
     printf("\t|-Source IP : %s\n", inet_ntoa(source.sin_addr));
     printf("\t|-Destination IP : %s\n",inet_ntoa(dest.sin_addr));
 
-    std = Unpack(buffer);
+    ip_hdr_len = ip->ihl *4;
 
-    printf("Client Send Roll no [%d]\n",std->num);
+    tcp = (struct tcphdr*)(buffer + ip_hdr_len + sizeof(struct ethhdr));
+
+    printf("\nTCP Header\n");
+    printf("\t|-Source Port : %d\n ", ntohs(tcp->source));
+    printf("\t|-Destination Port : %d\n ", ntohs(tcp->dest));
+    printf("\t|-TCP Sequence : %d\n" , ntohs(tcp->seq));
+    printf("\t|-TCP Ack Sequence : %d\n" , ntohs(tcp->ack_seq));
+    printf("\t|-TCP Flag res1 : %d\n" , ntohs(tcp->res1));
+    printf("\t|-TCP Flag doff : %d\n" , ntohs(tcp->doff));
+    printf("\t|-TCP Flag fin : %d\n" , ntohs(tcp->fin));
+    printf("\t|-TCP Flag syn : %d\n" , ntohs(tcp->syn));
+    printf("\t|-TCP Flag rst : %d\n" , ntohs(tcp->rst));
+    printf("\t|-TCP Flag psh : %d\n" , ntohs(tcp->psh));
+    printf("\t|-TCP Flag ack : %d\n" , ntohs(tcp->ack));
+  //  printf("\t|-TCP Flag urg : %d\n" , ntohs(tcp->ece));
+  //  printf("\t|-TCP Flag ece : %d\n" , ntohs(tcp->cwr));
+    printf("\t|-TCP Flag cwr : %d\n" , ntohs(tcp->fin));
+    printf("\t|-TCP Window : %d\n" , ntohs(tcp->window));
+    printf("\t|-TCP CheckSum : %d\n" , ntohs(tcp->check));
+    printf("\t|-TCP Urgernt Ponter : %d\n" , ntohs(tcp->urg_ptr));
+
+
+    DATA = (buffer + ip_hdr_len + sizeof(struct ethhdr) + sizeof(struct tcphdr));
+    FData_len = buffer_len - (ip_hdr_len +sizeof(struct ethhdr)+ sizeof(struct tcphdr));
+
+    std = Unpack(DATA);
+
+    printf("\nDATA RECEIVED\n");
+    for (idx = 0 ; idx < FData_len;idx++)
+        printf(" %0x",DATA[idx]);
+
+    printf("\nClient Send Roll no [%d]\n",std->num);
     printf("Client Send Name    [%s]\n",std->name);
 
 
     close(raw_server);
+
     if (NULL !=std)
     {
         free(std);
