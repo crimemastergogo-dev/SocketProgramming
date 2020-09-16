@@ -10,6 +10,8 @@
 #include <netinet/if_ether.h>             
 #include <netinet/ip.h>             
 #include <netinet/tcp.h>             
+#include <sys/ioctl.h>
+#include <net/if.h>
 
 
 typedef struct
